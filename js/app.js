@@ -35,7 +35,9 @@ var app =
 		// CAMERA!
 		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
 		camera.position.z = 400;
-
+		
+		
+		// ER, GEOMETRY! and TEXTURES!
 		var geometry = new THREE.CubeGeometry( 200, 200, 200 );
 
 		var texture = THREE.ImageUtils.loadTexture( 'textures/glass1.png' );
@@ -79,6 +81,5 @@ var app =
 		mesh.rotation.y += 0.01;
 
 		renderer.render( scene, camera );
-		// renderer.render( scene, camera, directionalLight );
 	}
 };
