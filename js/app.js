@@ -20,9 +20,9 @@ var app =
 		scene = new THREE.Scene( );
 
 		// LIGHTS!
-		var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-		directionalLight.position.set( 2, 2, 3 );
-		scene.add( directionalLight );
+		// var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+		// directionalLight.position.set( 2, 2, 3 );
+		// scene.add( directionalLight );
 
 		var ambiLight = new THREE.AmbientLight( 0x404040 );
 		// soft white light
@@ -31,16 +31,16 @@ var app =
 		// var hemiLight = new THREE.HemisphereLight(0xFFFFFF, 0x666666, 1 );
 		// scene.add( hemiLight ) ;
 
-		// create a point light
-		// pointLight = new THREE.PointLight( 0xFFFFFF );
-		//
-		// // set its position
-		// pointLight.position.x = 300;
-		// pointLight.position.y = 300;
-		// pointLight.position.z = 430;
-		//
-		// // add to the scene
-		// scene.add( pointLight );
+		//create a point light
+		pointLight = new THREE.PointLight( 0xFFFFFF );
+		
+		// set its position
+		pointLight.position.x = 0;
+		pointLight.position.y = 0;
+		pointLight.position.z = 250;
+		
+		// add to the scene
+		scene.add( pointLight );
 
 		// CAMERA!
 		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
@@ -68,7 +68,7 @@ var app =
 				mesh.rotation.y = ( Math.random( ) * 720 ) - 360 ;
 				mesh.position.y = ( Math.random( ) * 1500 ) - 750 ;
 				mesh.position.x = ( Math.random( ) * 1500 ) - 750 ;
-				mesh.position.z = 200 ;
+				mesh.position.z = ( Math.random( ) * 50 ) ;
 				// mesh.position.z = ( Math.random( ) * 1000 ) - 500 ;
 			
 			app.meshList.push( mesh ) ;
