@@ -4,6 +4,9 @@ var app =
 	scene : null,
 	renderer : null,
 	mesh : null,
+	pointLight : null,
+	meshList : [ ],
+	cubeCount : 100,
 
 	init : function( )
 	{
@@ -28,15 +31,23 @@ var app =
 		// var hemiLight = new THREE.HemisphereLight(0xFFFFFF, 0x666666, 1 );
 		// scene.add( hemiLight ) ;
 
-		// var light = new THREE.PointLight( 0xffffff, 1, 100 );
-		// light.position.set( 0, 0, 0 );
-		// scene.add( light );
+		// create a point light
+		// pointLight = new THREE.PointLight( 0xFFFFFF );
+		//
+		// // set its position
+		// pointLight.position.x = 300;
+		// pointLight.position.y = 300;
+		// pointLight.position.z = 430;
+		//
+		// // add to the scene
+		// scene.add( pointLight );
 
 		// CAMERA!
 		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-		camera.position.z = 400;
+		camera.position.z = 1000;
 
 		var geometry = new THREE.CubeGeometry( 200, 200, 200 );
+		geometry.normalsNeedUpdate = true;
 
 		var texture = THREE.ImageUtils.loadTexture( 'textures/glass1.png' );
 		texture.anisotropy = renderer.getMaxAnisotropy( );
@@ -44,14 +55,27 @@ var app =
 		var material = new THREE.MeshPhongMaterial(
 		{
 			map : texture,
-			transparent : true,
-			opacity : 0.4,
-			side : THREE.DoubleSide
+			// transparent : true,
+			// opacity : 0.4,
+			// side : THREE.DoubleSide
 		} );
 
-		mesh = new THREE.Mesh( geometry, material );
-		scene.add( mesh );
 
+		for ( var i = 0, j = app.cubeCount; i < j; i++ )
+		{
+			var mesh = new THREE.Mesh( geometry, material );
+				mesh.rotation.x = ( Math.random( ) * 720 ) - 360 ;
+				mesh.rotation.y = ( Math.random( ) * 720 ) - 360 ;
+				mesh.position.y = ( Math.random( ) * 1500 ) - 750 ;
+				mesh.position.x = ( Math.random( ) * 1500 ) - 750 ;
+				mesh.position.z = 200 ;
+				// mesh.position.z = ( Math.random( ) * 1000 ) - 500 ;
+			
+			app.meshList.push( mesh ) ;
+						
+			scene.add( mesh );
+		};
+		
 		// material.opacity = 0.7;
 
 		//
@@ -70,13 +94,22 @@ var app =
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
 	},
-
+	
 	animate : function( )
 	{
 		requestAnimationFrame( app.animate );
-
-		mesh.rotation.x += 0.005;
-		mesh.rotation.y += 0.01;
+		
+		i = app.cubeCount - 1 ;
+		
+		while( i >= 0 )
+		{
+			app.meshList[ i ].rotation.x += Math.random() / 100;
+			app.meshList[ i ].rotation.y += Math.random() / 100;
+			i--;
+		}
+		
+		// mesh.rotation.x += 0.005;
+		// mesh.rotation.y += 0.01;
 
 		renderer.render( scene, camera );
 		// renderer.render( scene, camera, directionalLight );
