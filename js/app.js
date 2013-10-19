@@ -7,6 +7,8 @@ var app =
 
     init: function () {
 
+        window.addEventListener('resize', app.onWindowResize, false);
+
         trixels = [ ] ;
         renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -16,10 +18,10 @@ var app =
 
         // LIGHTS!
         //create a point light
-        pointLight = new THREE.PointLight(0xFFFFFF);
+        var pointLight = new THREE.PointLight(0xFFFFFF);
 
         // set its position
-        pointLight.position.x = 0;
+        pointLight.position.x = 100;
         pointLight.position.y = 180;
         pointLight.position.z = 350;
 
@@ -31,41 +33,26 @@ var app =
         scene.add(ambiLight);
 
         // CAMERA!
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
         camera.position.z = 800;
 
         // STUFF!
 //        var geometry = new THREE.CubeGeometry(200, 200, 200);
 
-        var geometry = new THREE.SphereGeometry( 200, 20, 20) ;
-        var mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({ color : Math.random() * 0xFF0000 }) );
+        var geometry = new THREE.SphereGeometry(200, 20, 20);
+        var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial({ color: 0xFF00FF }));
 
+        trixelate( mesh ) ; // TODO: Need to check loaded / JSON objects
 
-//        scene.add( mesh );
-
-        trixelate( mesh ) ;
-
-//        console.log( trixels[ 0 ].mesh ) ;
-
-        window.addEventListener('resize', app.onWindowResize, false);
+        scene.add( mesh ) ;
 
         // ACTION!
-
-        setTimeout( app.tween ,500) ;
-
         app.animate();
+
+//        setTimeout(app.tween, 500);
     },
 
-    onWindowResize: function () {
-
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-    },
-
-    animate: function () {
+    animate : function () {
         requestAnimationFrame(app.animate);
 
         // TODO: Loop through all items
@@ -77,26 +64,29 @@ var app =
 //            t.mesh.rotation.z += Math.random() * 0.01 ;
 //        }
 
-        //camera.position.z += 5;
-
-//        trixels[ 0 ].mesh.rotation.z += Math.random() * 0.01;
+//        camera.rotation.y += 0.005;
 
         renderer.render(scene, camera);
     },
 
-    tween : function( )
-    {
-        for (var i = 0, j = trixels.length; i < j; i++)
-        {
-            var t = trixels[ i ] ;
+    tween : function () {
+        for (var i = 0, j = trixels.length; i < j; i++) {
+            var t = trixels[ i ];
 //            TweenMax.to(t.mesh.position, 2, { x : (Math.random() * 400) - 200,
 //                                              y : (Math.random() * 400) - 200,
 //                                              z : (Math.random() * 400) - 200 } );
 
-            TweenMax.to(t.mesh.position, 2, { x : t.homeX,
-                                              y : t.homeY,
-                                              z : t.homeZ } );
+            TweenMax.to(t.mesh.position, 2, { x: t.homeX,
+                y: t.homeY,
+                z: t.homeZ });
         }
+    },
+
+    onWindowResize: function () {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
     }
 };
 
@@ -128,20 +118,46 @@ function trixelate( mesh ) {
 
     var gs = [ ];                  //list of triangles
 
-    var triangles = [] ;
+    var triangles = [];
 
     // break it into component triangles
     for (var i = 0, j = ts.length; i < j; i++) {
 
+        // Get each triangle on the object
         var t = ts[ i ];    //triangle
 
-        var vA = vs[ t.a ];   // vertex
+        // Grab a reference to the vertex at each corner
         var vB = vs[ t.b ];   // vertex
         var vC = vs[ t.c ];   // vertex
+        var vA = vs[ t.a ];   // vertex
 
-        var verts = { a: vA , b : vB, c : vC } ;
+        // Stash vertex references
+        // This will be the vertex positions in scene space for the final Trixel.
+        var meshTargetVerts = { a : vA, b : vB, c : vC };
 
-        triangles.push( verts ) ;
+        // Create a virtual centroid for this triangle in scene space
+        // Note : A mesh created from these positions will consider it's position to be 0,0,0
+        // even though it may be physically anywhere in the scene. This is bad.
+        var cx = (vA.x + vB.x + vC.x) / 3 ;
+        var cy = (vA.y + vB.y + vC.y) / 3 ;
+        var cz = (vA.z + vB.z + vC.z) / 3 ;
+        // this will be the centroid position in space for the final Trixel.
+        var meshTargetCentroid = { x : cx, y : cy, z : cz } ;
+
+        // We need to normalise so that the vertices we actually use are positioned
+        // around 0,0,0 in the scene, so that we can set the position of the Trixel naturally
+        // So for each vertex, subtract the difference between it's position and the centroid
+        // and create a new vertex at the normalised position (i.e. as if 0,0,0 was the centroid)
+
+        var normalisedVertices = [ ] ;
+
+        for( var k = 0, l = 3; k < l; k++ )
+        {
+
+        }
+
+
+        triangles.push(verts);
 
 //        var g = new THREE.Geometry( ) ;
 //            g.vertices.push( vA ) ;
@@ -175,42 +191,41 @@ function trixelate( mesh ) {
 
 
     }
+/*
+    for (var i = 0, j = triangles.length; i < j; i++) {
+        var currentTriangle = triangles [ i ];
 
-    for (var i = 0, j = triangles.length; i < j; i++)
-    {
-        var currentTriangle = triangles [ i ] ;
-
-        var g = new THREE.Geometry( );
+        var g = new THREE.Geometry();
 //            g.vertices.push( currentTriangle.a ) ;
 //            g.vertices.push( currentTriangle.b ) ;
 //            g.vertices.push( currentTriangle.c ) ;
-            g.faces.push( new THREE.Face3( 0, 2, 1) ); // must be added counter-clockwise
+        g.faces.push(new THREE.Face3(0, 2, 1)); // must be added counter-clockwise
 
-        var mat = new THREE.MeshBasicMaterial({ color : Math.random() * 0xFF0000 }) ;
+        var mat = new THREE.MeshBasicMaterial({ color: Math.random() * 0xFF0000 });
 
-        var tm = new THREE.Mesh( g, mat );
+        var tm = new THREE.Mesh(g, mat);
 
-        var trixel = new Trixel( tm ) ;
+        var trixel = new Trixel(tm);
 
         // centroid
-        var cx = (currentTriangle.a.x + currentTriangle.b.x + currentTriangle.c.x) / 3 ;
-        var cy = (currentTriangle.a.y + currentTriangle.b.y + currentTriangle.c.y) / 3 ;
-        var cz = (currentTriangle.a.z + currentTriangle.b.z + currentTriangle.c.z) / 3 ;
+        var cx = (currentTriangle.a.x + currentTriangle.b.x + currentTriangle.c.x) / 3;
+        var cy = (currentTriangle.a.y + currentTriangle.b.y + currentTriangle.c.y) / 3;
+        var cz = (currentTriangle.a.z + currentTriangle.b.z + currentTriangle.c.z) / 3;
 
-        trixels.push( trixel ) ;
+        trixels.push(trixel);
 
-        tm.position.x = 0 ;
-        tm.position.y = 0 ;
-        tm.position.z = 0 ;
+        tm.position.x = 0;
+        tm.position.y = 0;
+        tm.position.z = 0;
 
-        console.log( trixel.mesh ) ;
-        scene.add( trixel.mesh );
+        console.log(trixel.mesh);
+//        scene.add(trixel.mesh);
     }
+ */
 }
 
-function Trixel( mesh )
-{
+function Trixel(mesh) {
 
-    this.mesh = mesh ;
+    this.mesh = mesh;
 
 }
