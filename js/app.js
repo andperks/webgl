@@ -64,6 +64,7 @@ var app =
         for (var i = 0, j = trixels.length; i < j; i++)
         {
             var t = trixels[ i ] ;
+            t.mesh.rotation.y += 0.005 ;
             t.mesh.geometry.computeVertexNormals();
             t.mesh.geometry.computeFaceNormals();
         }
