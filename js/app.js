@@ -1,118 +1,111 @@
-var app =
-{
+var app = {
     camera: null,
-    pointLight : null,
+    pointLight: null,
     scene: null,
     renderer: null,
     trixels: null,
 
-    exploded : false ,
-    lightMove : true ,
-    cameraMove : true ,
-    cameraRotation : 0,
-    lightRotation : 0,
+    exploded: false,
+    lightMove: true,
+    cameraMove: true,
+    cameraRotation: 0,
+    lightRotation: 0,
 
-    EXPLODE_ID : -1,
-    SPHERE_ID : 0,
-    CUBE_ID : 1,
-    EXPLODE_TIME_SECONDS : 0.3,
-    BUILD_TIME_SECONDS : 0.7,
+    EXPLODE_ID: -1,
+    SPHERE_ID: 0,
+    CUBE_ID: 1,
+    EXPLODE_TIME_SECONDS: 0.3,
+    BUILD_TIME_SECONDS: 0.7,
 
     init: function () {
 
         window.addEventListener('resize', app.onWindowResize, false);
 
-        trixels = [ ] ;
-        renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        app.trixels = [ ];
+        app.renderer = new THREE.WebGLRenderer();
+        app.renderer.setSize(window.innerWidth, window.innerHeight);
+
         document.body.appendChild(renderer.domElement);
-        scene = new THREE.Scene();
+
+        app.scene = new THREE.Scene();
 
         // LIGHTS!
         //create a point light
-        pointLight = new THREE.PointLight(0xFFFFFF);
+        app.pointLight = new THREE.PointLight(0xFFFFFF);
 
         // add to the scene
-        scene.add( pointLight );
+        app.scene.add(pointLight);
 
         var ambiLight = new THREE.AmbientLight(0x222222);
         // soft white light
-        scene.add(ambiLight);
+        app.scene.add(ambiLight);
 
         // CAMERA!
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-        camera.position.z = 800;
+        app.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+        app.camera.position.z = 800;
 
         // STUFF!
         var geometry = new THREE.SphereGeometry(200, 18, 29);
 //        var geometry = new THREE.TorusGeometry( 200, 60, 16, 12, Math.PI * 2 );
-        var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial({ color: 0xFF00FF }));
+        var mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ color: 0xFF00FF }));
 
 //        scene.add( mesh ) ;
 
-        trixelate( mesh ) ; // TODO: Need to check loaded / JSON objects
+        trixelate(mesh); // TODO: Need to check loaded / JSON objects
 
-        for( var i = 0, j = trixels.length; i < j; i++ )
+        for (var i = 0, j = app.trixels.length; i < j; i++)
         {
-            scene.add( trixels[ i ].mesh ) ;
+            scene.add(app.trixels[ i ].mesh);
         }
 
         // ACTION!
-        $("#sphereButton").click( function()
-        {
-            app.tween( app.SPHERE_ID ) ;
-            app.exploded = false ;
+        $("#sphereButton").click(function () {
+            app.tween(app.SPHERE_ID);
+            app.exploded = false;
         });
 
-        $("#explodeButton").click( function()
-        {
-            app.tween( app.EXPLODE_ID ) ;
-            app.exploded = true ;
+        $("#explodeButton").click(function () {
+            app.tween(app.EXPLODE_ID);
+            app.exploded = true;
         });
 
-        $("#cameraButton").click( function()
-        {
-            app.cameraMove = !app.cameraMove ;
+        $("#cameraButton").click(function () {
+            app.cameraMove = !app.cameraMove;
         });
 
-        $("#lightButton").click( function()
-        {
-            app.lightMove = !app.lightMove ;
+        $("#lightButton").click(function () {
+            app.lightMove = !app.lightMove;
         });
 
-        app.loop() ;
+        app.loop();
     },
 
-    loop : function () {
+    loop: function () {
         requestAnimationFrame( app.loop );
 
         //simple rotate camera
-        if( app.cameraMove )
-        {
+        if (app.cameraMove) {
             app.cameraRotation += 0.005;
-            camera.position.y = 300;
-            camera.position.x = Math.sin(app.cameraRotation) * 600 ;
-            camera.position.z = Math.cos(app.cameraRotation) * 600 ;
-            camera.lookAt( scene.position ); // the origin
+            app.camera.position.y = 300;
+            app.camera.position.x = Math.sin(app.cameraRotation) * 600;
+            app.camera.position.z = Math.cos(app.cameraRotation) * 600;
+            app.camera.lookAt(app.scene.position); // the origin
         }
 
         //simple rotate light
-        if( app.lightMove )
-        {
+        if (app.lightMove) {
             app.lightRotation += 0.05;
-            pointLight.position.y = 500 ;
-            pointLight.position.x = Math.sin(app.lightRotation) * 800 ;
-            pointLight.position.z = Math.cos(app.lightRotation) * 800 ;
+            app.pointLight.position.y = 500;
+            app.pointLight.position.x = Math.sin(app.lightRotation) * 800;
+            app.pointLight.position.z = Math.cos(app.lightRotation) * 800;
         }
 
-        for (var i = 0, j = trixels.length; i < j; i++)
-        {
-            var t = trixels[ i ] ;
+        for (var i = 0, j = app.trixels.length; i < j; i++) {
+            var t = app.trixels[ i ];
 
-            if( app.exploded )
-            {
-                t.mesh.rotation.z += 0.02 ;
-                t.mesh.rotation.y += 0.02 ;
+            if (app.exploded) {
+                t.mesh.rotation.z += 0.02;
+                t.mesh.rotation.y += 0.02;
             }
 
             // TODO: maybe need to do this on TweenMax Update or similar?
@@ -123,20 +116,19 @@ var app =
         renderer.render(scene, camera);
     },
 
-    tween : function ( positionID ) {
+    tween: function (positionID) {
 
-        for (var i = 0, j = trixels.length; i < j; i++)
-        {
-            var t = trixels[ i ];
-            positionID == -1 ? t.gotoRandom() : t.goTo( positionID ) ;
+        for (var i = 0, j = app.trixels.length; i < j; i++) {
+            var t = app.trixels[ i ];
+            positionID == -1 ? t.gotoRandom() : t.goTo(positionID);
         }
     },
 
     onWindowResize: function () {
 
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        app.camera.aspect = window.innerWidth / window.innerHeight;
+        app.camera.updateProjectionMatrix();
+        app.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 };
 
@@ -145,8 +137,6 @@ function trixelate( mesh ) {
     // send a piece of geometry
     var ts = mesh.geometry.faces;       // triangles
     var vs = mesh.geometry.vertices;    // vertices
-
-    var gs = [ ];                  //list of triangles
 
     // break it into component triangles
     for (var i = 0, j = ts.length; i < j; i++) {
