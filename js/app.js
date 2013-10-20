@@ -1,9 +1,22 @@
 var app =
 {
     camera: null,
+    pointLight : null,
     scene: null,
     renderer: null,
     trixels: null,
+
+    exploded : false ,
+    lightMove : true ,
+    cameraMove : true ,
+    cameraRotation : 0,
+    lightRotation : 0,
+
+    EXPLODE_ID : -1,
+    SPHERE_ID : 0,
+    CUBE_ID : 1,
+    EXPLODE_TIME_SECONDS : 0.3,
+    BUILD_TIME_SECONDS : 0.7,
 
     init: function () {
 
@@ -13,20 +26,16 @@ var app =
         renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-
         scene = new THREE.Scene();
 
         // LIGHTS!
         //create a point light
-        var pointLight = new THREE.PointLight(0xFFFFFF);
-            pointLight.position.x = 100;
-            pointLight.position.y = 180;
-            pointLight.position.z = 350;
+        pointLight = new THREE.PointLight(0xFFFFFF);
 
         // add to the scene
-        scene.add(pointLight);
+        scene.add( pointLight );
 
-        var ambiLight = new THREE.AmbientLight(0x404040);
+        var ambiLight = new THREE.AmbientLight(0x222222);
         // soft white light
         scene.add(ambiLight);
 
@@ -35,14 +44,10 @@ var app =
         camera.position.z = 800;
 
         // STUFF!
-//        var geometry = new THREE.CubeGeometry(200, 200, 200);
-
         var geometry = new THREE.SphereGeometry(200, 20, 20);
         var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial({ color: 0xFF00FF }));
 
-        mesh.position.z = -200 ;
-
-        //scene.add( mesh ) ;
+//        scene.add( mesh ) ;
 
         trixelate( mesh ) ; // TODO: Need to check loaded / JSON objects
 
@@ -52,37 +57,77 @@ var app =
         }
 
         // ACTION!
-        app.animate();
+        $("#sphereButton").click( function()
+        {
+            app.tween( app.SPHERE_ID ) ;
+            app.exploded = false ;
+        });
 
-        setTimeout(app.tween, 500);
+        $("#explodeButton").click( function()
+        {
+            app.tween( app.EXPLODE_ID ) ;
+            app.exploded = true ;
+        });
+
+        $("#cameraButton").click( function()
+        {
+            app.cameraMove = !app.cameraMove ;
+        });
+
+        $("#lightButton").click( function()
+        {
+            app.lightMove = !app.lightMove ;
+        });
+
+        app.loop() ;
     },
 
-    animate : function () {
-        requestAnimationFrame(app.animate);
+    loop : function () {
+        requestAnimationFrame( app.loop );
 
-        // TODO: Loop through all items
+        //simple rotate camera
+        if( app.cameraMove )
+        {
+            app.cameraRotation += 0.005;
+            camera.position.y = 300;
+            camera.position.x = Math.sin(app.cameraRotation) * 600 ;
+            camera.position.z = Math.cos(app.cameraRotation) * 600 ;
+            camera.lookAt( scene.position ); // the origin
+        }
+
+        //simple rotate light
+        if( app.lightMove )
+        {
+            app.lightRotation += 0.05;
+            pointLight.position.y = 500 ;
+            pointLight.position.x = Math.sin(app.lightRotation) * 800 ;
+            pointLight.position.z = Math.cos(app.lightRotation) * 800 ;
+        }
+
         for (var i = 0, j = trixels.length; i < j; i++)
         {
             var t = trixels[ i ] ;
-            t.mesh.rotation.y += 0.005 ;
+
+            if( app.exploded )
+            {
+                t.mesh.rotation.z += 0.02 ;
+                t.mesh.rotation.y += 0.02 ;
+            }
+
+            // TODO: maybe need to do this on TweenMax Update or similar?
             t.mesh.geometry.computeVertexNormals();
             t.mesh.geometry.computeFaceNormals();
         }
 
-//        camera.rotation.y += 0.005;
-
         renderer.render(scene, camera);
     },
 
-    tween : function () {
-
-        console.log( "call Tween") ;
+    tween : function ( positionID ) {
 
         for (var i = 0, j = trixels.length; i < j; i++)
         {
             var t = trixels[ i ];
-            t.goTo( 0 ) ;
-
+            positionID == -1 ? t.gotoRandom() : t.goTo( positionID ) ;
         }
     },
 
@@ -151,14 +196,18 @@ function trixelate( mesh ) {
             g.vertices.push( normalisedVertices[ 1 ] ) ;
             g.vertices.push( normalisedVertices[ 2 ] ) ;
             g.faces.push( new THREE.Face3( 0, 2, 1) ); // must be added counter-clockwise
+            g.computeFaceNormals();
             g.dynamic = true;
             g.__dirtyVertices = true;
             g.__dirtyNormals = true;
 
-        var mat = new THREE.MeshBasicMaterial(
+        var mat = new THREE.MeshLambertMaterial(
         {
-            color: Math.random() * 0xFFFFFF
+            color : 0x006666,
+            side  : THREE.DoubleSide
         });
+
+        mat.needsUpdate= true;
 
         var tm = new THREE.Mesh( g, mat );
 
@@ -175,25 +224,47 @@ function Trixel( mesh, positions ) {
     this.mesh = mesh;
     this.positions = positions ;
 
+    this.gotoRandom = function( )
+    {
+        TweenMax.to( this.mesh.position,
+                     app.EXPLODE_TIME_SECONDS,
+                     { x : ( Math.random() * 800 ) - 400,
+                       y : ( Math.random() * 800 ) - 400,
+                       z : ( Math.random() * 800 ) - 400 });
+
+        TweenMax.to( this.mesh.rotation,
+                     app.EXPLODE_TIME_SECONDS,
+                     { x : (( Math.random() * 360) * (Math.PI / 180) ),
+                       y : (( Math.random() * 360) * (Math.PI / 180) ),
+                       z : (( Math.random() * 360) * (Math.PI / 180) )}) ;
+    }
+
     this.goTo = function( position )
     {
-//        console.log( "call goto") ;
 
-        for (var i = 0 ; i < 3 ; i++ )
-        {
+        TweenMax.to( this.mesh.position,
+                     app.BUILD_TIME_SECONDS,
+                     { x : this.positions[ position ].meshCentre.x,
+                       y : this.positions[ position ].meshCentre.y,
+                       z : this.positions[ position ].meshCentre.z });
+
+
+        TweenMax.to( this.mesh.rotation,
+                     Math.random() * app.BUILD_TIME_SECONDS,
+                     { x : 0,
+                       y : 0,
+                       z : 0 });
+
+//        for (var i = 0 ; i < 3 ; i++ )
+//        {
             // move each vertex to new position
-            var cv = this.mesh.geometry.vertices[ i ] ;
-
+            // might / probably will used for changing meshes
+//            var cv = this.mesh.geometry.vertices[ i ] ;
 //            console.log( cv ) ;
-
 //            TweenMax.to( cv, 2, { x : this.positions[ position ][ i ].x,
 //                                  y : this.positions[ position ][ i ].y,
 //                                  z : this.positions[ position ][ i ].z })
-        }
-
-        TweenMax.to( this.mesh.position, 2, { x : this.positions[ 0 ].meshCentre.x,
-                                              y : this.positions[ 0 ].meshCentre.y,
-                                              z : this.positions[ 0 ].meshCentre.z });
+//        }
     }
 
 }
