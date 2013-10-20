@@ -44,7 +44,8 @@ var app =
         camera.position.z = 800;
 
         // STUFF!
-        var geometry = new THREE.SphereGeometry(200, 20, 20);
+        var geometry = new THREE.SphereGeometry(200, 18, 29);
+//        var geometry = new THREE.TorusGeometry( 200, 60, 16, 12, Math.PI * 2 );
         var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial({ color: 0xFF00FF }));
 
 //        scene.add( mesh ) ;
@@ -237,7 +238,7 @@ function Trixel( mesh, positions ) {
                      { x : (( Math.random() * 360) * (Math.PI / 180) ),
                        y : (( Math.random() * 360) * (Math.PI / 180) ),
                        z : (( Math.random() * 360) * (Math.PI / 180) )}) ;
-    }
+    };
 
     this.goTo = function( position )
     {
@@ -265,6 +266,6 @@ function Trixel( mesh, positions ) {
 //                                  y : this.positions[ position ][ i ].y,
 //                                  z : this.positions[ position ][ i ].z })
 //        }
-    }
+    };
 
 }
