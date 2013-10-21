@@ -25,7 +25,7 @@ var app = {
         app.renderer = new THREE.WebGLRenderer();
         app.renderer.setSize(window.innerWidth, window.innerHeight);
 
-        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(app.renderer.domElement);
 
         app.scene = new THREE.Scene();
 
@@ -34,7 +34,7 @@ var app = {
         app.pointLight = new THREE.PointLight(0xFFFFFF);
 
         // add to the scene
-        app.scene.add(pointLight);
+        app.scene.add(app.pointLight);
 
         var ambiLight = new THREE.AmbientLight(0x222222);
         // soft white light
@@ -55,7 +55,7 @@ var app = {
 
         for (var i = 0, j = app.trixels.length; i < j; i++)
         {
-            scene.add(app.trixels[ i ].mesh);
+            app.scene.add(app.trixels[ i ].mesh);
         }
 
         // ACTION!
@@ -84,7 +84,8 @@ var app = {
         requestAnimationFrame( app.loop );
 
         //simple rotate camera
-        if (app.cameraMove) {
+        if (app.cameraMove)
+        {
             app.cameraRotation += 0.005;
             app.camera.position.y = 300;
             app.camera.position.x = Math.sin(app.cameraRotation) * 600;
@@ -93,14 +94,16 @@ var app = {
         }
 
         //simple rotate light
-        if (app.lightMove) {
+        if (app.lightMove)
+        {
             app.lightRotation += 0.05;
             app.pointLight.position.y = 500;
             app.pointLight.position.x = Math.sin(app.lightRotation) * 800;
             app.pointLight.position.z = Math.cos(app.lightRotation) * 800;
         }
 
-        for (var i = 0, j = app.trixels.length; i < j; i++) {
+        for (var i = 0, j = app.trixels.length; i < j; i++)
+        {
             var t = app.trixels[ i ];
 
             if (app.exploded) {
@@ -109,11 +112,12 @@ var app = {
             }
 
             // TODO: maybe need to do this on TweenMax Update or similar?
-            t.mesh.geometry.computeVertexNormals();
-            t.mesh.geometry.computeFaceNormals();
+            // Prob need for morphing.
+            t.mesh.geometry.computeVertexNormals( );
+            t.mesh.geometry.computeFaceNormals( );
         }
 
-        renderer.render(scene, camera);
+        app.renderer.render(app.scene, app.camera);
     },
 
     tween: function (positionID) {
@@ -206,7 +210,7 @@ function trixelate( mesh ) {
 
         var trixel = new Trixel( tm, [ position ] ) ;
 
-        trixels.push( trixel ) ;
+        app.trixels.push( trixel ) ;
     }
 }
 
