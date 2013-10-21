@@ -23,7 +23,7 @@ var app =
         window.addEventListener('resize', app.onWindowResize, false);
 
         app.initScene( ) ;
-        app.initGeometry( ) ;
+        app.loadModel( ) ;
         app.initControls( ) ;
 
         app.loop( );
@@ -50,20 +50,28 @@ var app =
         app.scene.add(ambiLight);
 
         // CAMERA!
-        app.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-        app.camera.position.z = 800;
+        var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+        var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+        app.camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
     },
 
-    initGeometry : function( )
+    loadModel : function( )
     {
-        // STUFF!
-        var geometry = new THREE.SphereGeometry(200, 18, 29);
-//        var geometry = new THREE.TorusGeometry( 200, 60, 16, 12, Math.PI * 2 );
-        var mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ color: 0xFF00FF }));
+        console.log( "loadModel" ) ;
+        var jsonLoader = new THREE.JSONLoader();
+            jsonLoader.load("models/teapot.js", app.onModelLoaded );
+    },
 
-//        scene.add( mesh ) ;
+    onModelLoaded : function( geometry, materials )
+    {
+        console.log( "onModelLoaded" ) ;
 
-        trixelate(mesh); // TODO: Need to check loaded / JSON objects
+        var material = new THREE.MeshFaceMaterial( materials );
+
+        var model = new THREE.Mesh( geometry, material );
+//            model.scale.set(100, 100, 100);
+
+        trixelate( model );
 
         for (var i = 0, j = app.trixels.length; i < j; i++)
         {
@@ -110,10 +118,10 @@ var app =
         if (app.cameraMove)
         {
             app.cameraRotation += 0.005;
-            app.camera.position.y = 300;
-            app.camera.position.x = Math.sin(app.cameraRotation) * 600;
-            app.camera.position.z = Math.cos(app.cameraRotation) * 600;
-            app.camera.lookAt(app.scene.position); //the origin
+            app.camera.position.y = 50;
+            app.camera.position.x = Math.sin(app.cameraRotation) * 100;
+            app.camera.position.z = Math.cos(app.cameraRotation) * 100;
+            app.camera.lookAt( app.scene.position ); //the origin
         }
 
         //simple rotate light
@@ -125,19 +133,23 @@ var app =
             app.pointLight.position.z = Math.cos(app.lightRotation) * 800;
         }
 
-        for (var i = 0, j = app.trixels.length; i < j; i++)
+        if ( app.exploded )
         {
-            var t = app.trixels[ i ];
+            for (var i = 0, j = app.trixels.length; i < j; i++)
+            {
+                var t = app.trixels[ i ];
 
-            if (app.exploded) {
-                t.mesh.rotation.z += 0.02;
-                t.mesh.rotation.y += 0.02;
+
+                {
+                    t.mesh.rotation.z += 0.02;
+                    t.mesh.rotation.y += 0.02;
+                }
+
+                // TODO: maybe need to do this on TweenMax Update or similar?
+                // Prob need for morphing.
+//            t.mesh.geometry.computeVertexNormals( );
+//            t.mesh.geometry.computeFaceNormals( );
             }
-
-            // TODO: maybe need to do this on TweenMax Update or similar?
-            // Prob need for morphing.
-            t.mesh.geometry.computeVertexNormals( );
-            t.mesh.geometry.computeFaceNormals( );
         }
 
         app.renderer.render(app.scene, app.camera);
