@@ -90,7 +90,7 @@ var app = {
             app.camera.position.y = 300;
             app.camera.position.x = Math.sin(app.cameraRotation) * 600;
             app.camera.position.z = Math.cos(app.cameraRotation) * 600;
-            app.camera.lookAt(app.scene.position); // the origin
+            app.camera.lookAt(app.scene.position); //the origin
         }
 
         //simple rotate light
