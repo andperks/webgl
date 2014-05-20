@@ -8,6 +8,11 @@ var app =
     canvas : null,
     context: null,
     originalFace : null,
+    baseFaceX : null,
+    baseFaceY : null,
+    faceXOffset : null,
+    faceYOffset : null,
+    scaleFactor : null,
 
     initVideo : function()
     {
@@ -15,14 +20,11 @@ var app =
             console.log('Reeeejected!', e);
         };
 
-        // Not showing vendor prefixes.
+        // Webkit only
         navigator.webkitGetUserMedia({video: true, audio: false}, function(stream)
         {
             video = document.querySelector('video');
             video.src = window.URL.createObjectURL(stream);
-
-            // Note: onloadedmetadata doesn't fire in Chrome when using it with getUserMedia.
-            // See crbug.com/110938.
 
             video.onloadedmetadata = function(e) {
                 // Ready to go. Do some stuff.
@@ -38,7 +40,7 @@ var app =
     {
         //3D bits
         renderer = new THREE.WebGLRenderer( );
-        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setSize( 640, 480 );
         document.body.appendChild( renderer.domElement );
 
         //Video manipulation
@@ -58,7 +60,6 @@ var app =
 
         // CAMERA!
         camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-        camera.position.z = 400;
 
         // ER, GEOMETRY! and TEXTURES!
         var geometry = new THREE.CubeGeometry( 200, 200, 200 );
@@ -68,10 +69,7 @@ var app =
 
         var material = new THREE.MeshPhongMaterial(
             {
-                map : texture,
-                transparent : true,
-                opacity : 1,
-                side : THREE.DoubleSide
+                map : texture
             } );
 
         mesh = new THREE.Mesh( geometry, material );
@@ -99,6 +97,8 @@ var app =
         if( !app.originalFace && faces.length === 1)
         {
             app.originalFace = faces[0];
+            app.baseFaceX = app.originalFace.x ;
+            app.baseFaceY = app.originalFace.y ;
         }
 
         // Log process time
@@ -130,14 +130,16 @@ var app =
 
     scaleContent : function(newFace)
     {
-        var scaleFactor = app.originalFace.height / newFace.height;
+        app.scaleFactor = app.originalFace.height / newFace.height;
 
-        console.log( "scaleFactor", scaleFactor ) ;
-        console.log( "faceX", newFace.x ) ;
-        console.log( "faceY", newFace.y ) ;
+        app.faceXOffset = newFace.x - app.baseFaceX ;
+        app.faceYOffset = (app.baseFaceY - newFace.y) * 2 ;
 
-        //content.style.setProperty('-o-transform', 'scale('+scaleFactor+')');
-        //content.style.setProperty('-webkit-transform', 'scale('+scaleFactor+')');
+        //console.log( "scaleFactor", scaleFactor ) ;
+        //console.log( "faceX", newFace.x ) ;
+        //console.log( "faceY", newFace.y ) ;
+        //console.log( "faceXOffset", app.faceXOffset ) ;
+        //console.log( "faceYOffset", app.faceYOffset ) ;
     },
 
 	onWindowResize : function( )
@@ -148,15 +150,25 @@ var app =
 
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
-	},
+    },
 
-	animate : function( )
-	{
+    animate : function( )
+    {
 		requestAnimationFrame( app.animate );
 
 		//mesh.rotation.x += 0.005;
 		//mesh.rotation.y += 0.01;
 
+
+        TweenMax.to( camera.position, 1, {  x : app.faceXOffset ? 0 - app.faceXOffset : 0,
+                                            y : app.faceYOffset ? 0 - app.faceXOffset : 0,
+                                            z : 400 * app.scaleFactor }) ;
+
+       // camera.position.z = 400 * app.scaleFactor ;
+       // camera.position.x = app.faceXOffset ? 0 - app.faceXOffset : 0 ;
+       // camera.position.y = app.faceYOffset ? 0 - app.faceXOffset : 0 ;
+        camera.lookAt(scene.position); //the origin
+
 		renderer.render( scene, camera );
-	}
+    }
 };
